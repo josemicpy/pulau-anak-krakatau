@@ -2,7 +2,7 @@
 
 function z = umbraliza(x)
 
-  UMBRAL = [0, 89, 127, 153, 255];
+  UMBRAL = [0, 103, 255];
 
   [F, C] = size(x);
   x = double(x);
@@ -22,7 +22,6 @@ function z = umbraliza(x)
         z(f, c) = ndp;
       end
     end
-    f
   end
 
   z = uint8(z);
