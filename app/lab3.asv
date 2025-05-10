@@ -1,0 +1,69 @@
+basePath = '..\img\';
+outputDir = fullfile(basePath, '..', 'results_lab3');
+if ~exist(outputDir, 'dir')
+    mkdir(outputDir);
+end
+
+% Lista de carpetas dentro del directorio base
+folders = dir(basePath);
+folders = folders([folders.isdir] & ~startsWith({folders.name}, '.'));
+
+for i = 1:length(folders)
+    folderName = folders(i).name;
+    fullFolderPath = fullfile(basePath, folderName);
+    
+    % Leer bandas necesarias
+    B02_file = dir(fullfile(fullFolderPath, '*B02__Raw_*.png')); % Azul
+    B03_file = dir(fullfile(fullFolderPath, '*B03__Raw_*.png')); % Verde
+    B04_file = dir(fullfile(fullFolderPath, '*B04__Raw_*.png')); % Rojo
+    B11_file = dir(fullfile(fullFolderPath, '*B08__Raw_*.png')); % NIR
+    
+    if isempty(B02_file) || isempty(B03_file) || isempty(B04_file) || isempty(B11_file)
+        warning('Faltan bandas en la carpeta: %s', folderName);
+        continue;
+    end
+    
+    azul = imread(fullfile(fullFolderPath, B02_file(1).name));
+    verde = imread(fullfile(fullFolderPath, B03_file(1).name));
+    rojo = imread(fullfile(fullFolderPath, B04_file(1).name));
+    swir = imread(fullfile(fullFolderPath, B11_file(1).name)); % Usando SWIR1
+
+    % Expansión de la banda SWIR1 para ajustar el rango de valores
+    swir = expan(swir, 0, 255);  
+
+    % Aplicar corte de colas a las imágenes para eliminar valores extremos
+    azul = corte(azul, 0.01);
+    verde = corte(verde, 0.01);
+    rojo = corte(rojo, 0.01);
+    swir = corte(swir, 0.01);
+    
+    % Crear la subcarpeta para esta fecha
+    outputSubDir = fullfile(outputDir, folderName);
+    if ~exist(outputSubDir, 'dir')
+        mkdir(outputSubDir);
+    end
+    
+    % Guardar Banda SWIR1
+    imwrite(swir, fullfile(outputSubDir, 'Banda_SWIR1.png'));
+    
+    % Guardar Histograma Banda SWIR1
+    h = figure('Visible', 'off');
+    histogram(swir(:), 256);
+    title('Histograma Banda SWIR1');
+    xlabel('Intensidad');
+    ylabel('Número de píxeles');
+    saveas(h, fullfile(outputSubDir, 'Histograma_SWIR1.png'));
+    close(h);
+    
+    % Composición True Color 
+    trueColor = combina(rojo, verde, azul);  
+    imwrite(trueColor, fullfile(outputSubDir, 'Composicion_True_Color.png'));
+    
+    % Composición False Color (SWIR1, Rojo, Verde)
+    falseColor = cat(3, swir, rojo, verde);  
+    imwrite(falseColor, fullfile(outputSubDir, 'Composicion_False_Color_SWIR1.png'));
+    
+    % Aplicar corte en HSV (Saturación)
+    falseColorHSV = cortehsv(falseColor, 0.1);  
+    imwrite(falseColorHSV, fullfile(outputSubDir, 'Composicion_False_Color_Corte_S.png'));
+end

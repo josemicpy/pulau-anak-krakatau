@@ -1,5 +1,5 @@
 % Ruta base donde están las carpetas
-basePath = '..\pulau-anak-krakatau\img\';
+basePath = '..\img';
 
 % Lista de carpetas dentro del directorio base (exceptuando . y ..)
 folders = dir(basePath);
